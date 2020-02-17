@@ -47,7 +47,7 @@ async function drawScatter() {
   // margin pushes it down so it sits inside the wrapper
   // within the margins
   const bounds = wrapper.append("g")
-      .style("transform", `translate(%{
+      .style("transform", `translate(${
         dimensions.margin.left
       }px, ${
         dimensions.margin.top
@@ -68,7 +68,6 @@ async function drawScatter() {
       .domain(d3.extent(dataset, yAccessor))
       .range([dimensions.boundedHeight, 0])      
       .nice()
-  
   // create a variable to store our dots
   // if dots were already plotted this selection would 
   // also update those
@@ -79,6 +78,12 @@ async function drawScatter() {
   // Our selection gets a _entry key that lists upcoming data
   // _exit key lists any datapoints already drawn that are
   // not in the udpated data set
+// color dots based on cloud cover
+  const colorAccessor = d => d.cloudCover
+  const colorScale = d3.scaleLinear()
+     .domain(d3.extent(dataset, colorAccessor))
+     .range(["skyblue","darkslategrey"])
+
   const dots = bounds.selectAll("circle")
       .data(dataset)
     .enter()
@@ -86,7 +91,33 @@ async function drawScatter() {
       .attr("cx", d => xScale(xAccessor(d)))
       .attr("cy", d => yScale(yAccessor(d)))
       .attr("r", 5)
-      .attr("fill", "cornflowerblue")
+      .attr("fill", d => colorScale(colorAccessor(d)))
+  // xscale
+  const xAxisGenerator = d3.axisBottom()
+    .scale(xScale)
 
-}
+  const xAxis = bounds.append("g")
+    .call(xAxisGenerator)
+      .style("transform", `translateY(
+        ${dimensions.boundedHeight}px`)
+  const xAxisLabel = xAxis.append("text")
+      .attr("x", dimensions.boundedWidth / 2)
+      .attr("y", dimensions.margin.bottom - 10)
+      .attr("fill", "black")
+      .style("font-size", "1.4em")
+      .html("Dew point (&deg;F)")
+  const yAxisGenerator = d3.axisLeft()
+    .scale(yScale)
+    .ticks(4)
+  const yAxis = bounds.append("g")
+      .call(yAxisGenerator)
+  const yAxisLabel = yAxis.append("text")
+      .attr("x", -dimensions.boundedHeight / 2) 
+      .attr("y", -dimensions.margin.left + 10) 
+      .attr("fill", "black")
+      .style("font-size", "1.4em")
+      .text("Relative humidity")
+      .style("transform", "rotate(-90deg)")
+      .style("text-anchor", "middle")
+    }
 drawScatter()
